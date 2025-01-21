@@ -1,10 +1,3 @@
-//
-//  ViewController.swift
-//  Mix Colors
-//
-//  Created by Игорь Клевжиц on 20.01.2025.
-//
-
 import UIKit
 
 class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
@@ -31,7 +24,9 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
     
     // MARK: - Private Properties
     
-    private let sizeButtons: CGFloat = 100
+    private lazy var sizeButtons: CGFloat = 100
+    private var portraitConstraints: [NSLayoutConstraint] = []
+    private var landscapeConstraints: [NSLayoutConstraint] = []
     
     private enum ColorButtons {
         case colorOneButton
@@ -42,12 +37,27 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
     // MARK: - Life Cycle
 
     override func viewDidLoad() {
-        
         super.viewDidLoad()
-        
         setViews()
-        setupConstraints()
-        
+        setupConstraintsForPortrait()
+    }
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        self.view.layoutIfNeeded()
+        coordinator.animate(alongsideTransition: { _ in
+            if UIDevice.current.orientation.isLandscape {
+                self.updateConstraintsForLandscape()
+            } else {
+                self.updateConstraintsForPortrait()
+            }
+            
+        }, completion: nil)
+    }
+    func updateConstraintsForLandscape() {
+        setupConstraintsForLandscape()
+    }
+    func updateConstraintsForPortrait() {
+        setupConstraintsForPortrait()
     }
     
     // MARK: - Methods
@@ -132,7 +142,7 @@ extension ViewController {
         colorOneButton.tag = 1
         colorTwoButton.tag = 2
         
-//        view.backgroundColor = .white
+        view.backgroundColor = .white
         
         view.addSubview(nameAppLabel)
         
@@ -157,39 +167,75 @@ extension ViewController {
     }
     
     // MARK: - Setup Constraints
-    
-    private func setupConstraints() {
+
+    private func setupConstraintsForPortrait() {
         
-        NSLayoutConstraint.activate([
-            
+        deactivateConstraints()
+        
+        portraitConstraints = [
             nameAppLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             nameAppLabel.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
             
-            colorOneStackView.topAnchor.constraint(equalTo: nameAppLabel.bottomAnchor, constant: 30),
-            colorOneStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            colorOneButton.heightAnchor.constraint(equalToConstant: sizeButtons),
-            colorOneButton.widthAnchor.constraint(equalToConstant: sizeButtons),
-            
-            plusLabel.topAnchor.constraint(equalTo: colorOneButton.bottomAnchor, constant: 10),
-            plusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            
-            colorTwoStackView.topAnchor.constraint(equalTo: plusLabel.bottomAnchor, constant: 10),
+            colorTwoStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             colorTwoStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             colorTwoButton.heightAnchor.constraint(equalToConstant: sizeButtons),
             colorTwoButton.widthAnchor.constraint(equalToConstant: sizeButtons),
             
-            equaleLabel.topAnchor.constraint(equalTo: colorTwoButton.bottomAnchor, constant: 10),
+            colorOneStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: view.frame.height / -4),
+            colorOneStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            colorOneButton.heightAnchor.constraint(equalToConstant: sizeButtons),
+            colorOneButton.widthAnchor.constraint(equalToConstant: sizeButtons),
+            
+            plusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: view.frame.height / -8),
+            plusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            equaleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: view.frame.height / 8),
             equaleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
-            colorResultStackView.topAnchor.constraint(equalTo: equaleLabel.bottomAnchor, constant: 10),
+            colorResultStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: view.frame.height / 4),
             colorResultStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             colorResultButton.heightAnchor.constraint(equalToConstant: sizeButtons),
             colorResultButton.widthAnchor.constraint(equalToConstant: sizeButtons)
-            
-        ])
+        ]
+        NSLayoutConstraint.activate(portraitConstraints)
+    }
+
+    private func setupConstraintsForLandscape() {
         
+        deactivateConstraints()
+        
+        landscapeConstraints = [
+            nameAppLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            nameAppLabel.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            
+            colorTwoStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            colorTwoStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            colorTwoButton.heightAnchor.constraint(equalToConstant: sizeButtons),
+            colorTwoButton.widthAnchor.constraint(equalToConstant: sizeButtons),
+            
+            colorOneStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            colorOneStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: view.frame.height / -2),
+            colorOneButton.heightAnchor.constraint(equalToConstant: sizeButtons),
+            colorOneButton.widthAnchor.constraint(equalToConstant: sizeButtons),
+            
+            plusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            plusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: view.frame.height / -4),
+            
+            equaleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            equaleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: view.frame.height / 4),
+            
+            colorResultStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            colorResultStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: view.frame.height / 2),
+            colorResultButton.heightAnchor.constraint(equalToConstant: sizeButtons),
+            colorResultButton.widthAnchor.constraint(equalToConstant: sizeButtons)
+        ]
+        NSLayoutConstraint.activate(landscapeConstraints)
     }
     
+    private func deactivateConstraints() {
+        NSLayoutConstraint.deactivate(portraitConstraints)
+        NSLayoutConstraint.deactivate(landscapeConstraints)
+    }
 }
 
 extension UILabel {
