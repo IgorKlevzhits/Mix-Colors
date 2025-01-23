@@ -10,11 +10,19 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
     private lazy var colorOneLabel = UILabel(text: Bundle.localizedString(forKey: closestColorName(to: colorOneButton.backgroundColor ?? .white) ?? "error", value: nil, table: nil), size: 20)
     private var colorOneButton = UIButton(color: .red)
     
+    private var colorThreeStackView = UIStackView(axis: .vertical)
+    private lazy var colorThreeLabel = UILabel(text: Bundle.localizedString(forKey: closestColorName(to: colorThreeButton.backgroundColor ?? .white) ?? "error", value: nil, table: nil), size: 20)
+    private var colorThreeButton = UIButton(color: .blue)
+    
     private var plusLabel = UILabel(text: "+", size: 30)
     
     private var colorTwoStackView = UIStackView(axis: .vertical)
     private lazy var colorTwoLabel = UILabel(text: Bundle.localizedString(forKey: closestColorName(to: colorTwoButton.backgroundColor ?? .white) ?? "error", value: nil, table: nil), size: 20)
-    private var colorTwoButton = UIButton(color: .red)
+    private var colorTwoButton = UIButton(color: .green)
+    
+    private var colorFourStackView = UIStackView(axis: .vertical)
+    private lazy var colorFourLabel = UILabel(text: Bundle.localizedString(forKey: closestColorName(to: colorFourButton.backgroundColor ?? .white) ?? "error", value: nil, table: nil), size: 20)
+    private var colorFourButton = UIButton(color: .purple)
     
     private var equaleLabel = UILabel(text: "=", size: 30)
     
@@ -28,9 +36,20 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
         return element
     }()
     
+    private lazy var colorsStepper: UIStepper = {
+        let element = UIStepper()
+        element.minimumValue = 2
+        element.maximumValue = 4
+        element.translatesAutoresizingMaskIntoConstraints = false
+        return element
+    }()
+    
     // MARK: - Private Properties
     
-    private lazy var sizeButtons: CGFloat = 100
+    private var constraintForColorOneStackView: CGFloat = 0
+    private var constraintForColorTwoStackView: CGFloat = 0
+    private var constraintForColorOneLandscapeStackView: CGFloat = -0.055
+    private var constraintForColorTwoLandscapeStackView: CGFloat = 0.0625
     private var portraitConstraints: [NSLayoutConstraint] = []
     private var landscapeConstraints: [NSLayoutConstraint] = []
     
@@ -45,8 +64,12 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         setViews()
-        setupConstraintsForPortrait()
         updateUIForCurrentTheme()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        adjustLayoutForCurrentOrientation()
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -58,26 +81,20 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
     
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
-        self.view.layoutIfNeeded()
+
+        // При изменении ориентации, обновляем интерфейс
         coordinator.animate(alongsideTransition: { _ in
-            if UIDevice.current.orientation.isLandscape {
-                self.updateConstraintsForLandscape()
-            } else {
-                self.updateConstraintsForPortrait()
-            }
-            
+            self.adjustLayoutForCurrentOrientation()
         }, completion: nil)
     }
-    
-    func updateConstraintsForLandscape() {
-        setupConstraintsForLandscape()
+
+    private func adjustLayoutForCurrentOrientation() {
+        if UIDevice.current.orientation.isLandscape {
+            setupConstraintsForLandscape()
+        } else {
+            setupConstraintsForPortrait()
+        }
     }
-    
-    func updateConstraintsForPortrait() {
-        setupConstraintsForPortrait()
-    }
-    
-    
     
     // MARK: - Methods
     
@@ -94,16 +111,31 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
         if let sender = self.view.viewWithTag(viewController.view.tag) as? UIButton {
             sender.backgroundColor = viewController.selectedColor
         }
-        if let sender = self.view.viewWithTag(viewController.view.tag == 1 ? 2 : 1) as? UIButton {
-            colorResultButton.backgroundColor = viewController.selectedColor.mix(with: sender.backgroundColor ?? .white)
-        }
+        updateResultColor()
         changedColorName()
+    }
+    
+    private func updateResultColor() {
+        if colorsStepper.value == 2 {
+            colorResultButton.backgroundColor = colorOneButton.backgroundColor?.mix(with: [colorTwoButton.backgroundColor ?? .white])
+        } else if colorsStepper.value == 3 {
+            colorResultButton.backgroundColor = colorOneButton.backgroundColor?.mix(with: [colorTwoButton.backgroundColor ?? .white,
+                                                                                           colorThreeButton.backgroundColor ?? .white
+                                                                                          ])
+        } else {
+            colorResultButton.backgroundColor = colorOneButton.backgroundColor?.mix(with: [colorTwoButton.backgroundColor ?? .white,
+                                                                                           colorThreeButton.backgroundColor ?? .white,
+                                                                                           colorFourButton.backgroundColor ?? .white
+                                                                                          ])
+        }
     }
     
     private func changedColorName() {
         colorOneLabel.text = Bundle.localizedString(forKey: closestColorName(to: colorOneButton.backgroundColor ?? .white) ?? "error", value: nil, table: nil)
         colorTwoLabel.text = Bundle.localizedString(forKey: closestColorName(to: colorTwoButton.backgroundColor ?? .white) ?? "error", value: nil, table: nil)
         colorResultLabel.text = Bundle.localizedString(forKey: closestColorName(to: colorResultButton.backgroundColor ?? .white) ?? "error", value: nil, table: nil)
+        colorThreeLabel.text = Bundle.localizedString(forKey: closestColorName(to: colorThreeButton.backgroundColor ?? .white) ?? "error", value: nil, table: nil)
+        colorFourLabel.text = Bundle.localizedString(forKey: closestColorName(to: colorFourButton.backgroundColor ?? .white) ?? "error", value: nil, table: nil)
     }
     
     func closestColorName(to color: UIColor) -> String? {
@@ -189,7 +221,6 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
     
     private func updateUIForCurrentTheme() {
             if traitCollection.userInterfaceStyle == .dark {
-                // Для темной темы
                 view.backgroundColor = .black
                 nameAppLabel.textColor = .white
                 colorOneLabel.textColor = .white
@@ -198,7 +229,6 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
                 plusLabel.textColor = .white
                 equaleLabel.textColor = .white
             } else {
-                // Для светлой темы
                 view.backgroundColor = .white
                 nameAppLabel.textColor = .black
                 colorOneLabel.textColor = .black
@@ -208,6 +238,114 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
                 equaleLabel.textColor = .black
             }
         }
+    
+    @objc func changedCountsColors(sender: UIStepper) {
+        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut], animations: {
+            if UIDevice.current.orientation.isLandscape {
+                if sender.value == 3 {
+                    self.constraintForColorOneLandscapeStackView = 0
+                    self.constraintForColorTwoLandscapeStackView = 0.0625
+                    self.constraintForColorOneStackView = -0.2
+                    self.constraintForColorTwoStackView = 0
+                    
+                    self.colorThreeStackView.alpha = 1
+                    self.colorFourStackView.alpha = 0
+                    
+                    self.updateConstraintsForButtonsLandscape()
+                    self.updateResultColor()
+                    self.changedColorName()
+                } else if sender.value == 4 {
+                    self.constraintForColorOneLandscapeStackView = 0
+                    self.constraintForColorTwoLandscapeStackView = 0
+                    self.constraintForColorOneStackView = -0.2
+                    self.constraintForColorTwoStackView = -0.2
+                    
+                    self.colorThreeStackView.alpha = 1
+                    self.colorFourStackView.alpha = 1
+                    
+                    self.updateConstraintsForButtonsLandscape()
+                    self.updateResultColor()
+                    self.changedColorName()
+                } else {
+                    self.constraintForColorOneLandscapeStackView = -0.055
+                    self.constraintForColorTwoLandscapeStackView = 0.0625
+                    self.constraintForColorOneStackView = 0
+                    self.constraintForColorTwoStackView = 0
+                    
+                    self.colorThreeStackView.alpha = 0
+                    self.colorFourStackView.alpha = 0
+                    
+                    self.updateConstraintsForButtonsLandscape()
+                    self.updateResultColor()
+                    self.changedColorName()
+                }
+            } else {
+                if sender.value == 3 {
+                    self.constraintForColorOneStackView = -0.2
+                    self.constraintForColorTwoStackView = 0
+                    self.constraintForColorOneLandscapeStackView = 0
+                    self.constraintForColorTwoLandscapeStackView = 0.0625
+                    
+                    self.colorThreeStackView.alpha = 1
+                    self.colorFourStackView.alpha = 0
+                    
+                    self.updateConstraintsForButtons()
+                    self.updateResultColor()
+                    self.changedColorName()
+                } else if sender.value == 4 {
+                    self.constraintForColorOneStackView = -0.2
+                    self.constraintForColorTwoStackView = -0.2
+                    self.constraintForColorOneLandscapeStackView = 0
+                    self.constraintForColorTwoLandscapeStackView = 0
+                    
+                    self.colorThreeStackView.alpha = 1
+                    self.colorFourStackView.alpha = 1
+                    
+                    self.updateConstraintsForButtons()
+                    self.updateResultColor()
+                    self.changedColorName()
+                } else {
+                    self.constraintForColorOneStackView = 0
+                    self.constraintForColorTwoStackView = 0
+                    self.constraintForColorOneLandscapeStackView = -0.055
+                    self.constraintForColorTwoLandscapeStackView = 0.0625
+                    
+                    self.colorThreeStackView.alpha = 0
+                    self.colorFourStackView.alpha = 0
+                    
+                    self.updateConstraintsForButtons()
+                    self.updateResultColor()
+                    self.changedColorName()
+                }
+            }
+            self.view.layoutIfNeeded()
+        })
+    }
+    
+    private func updateConstraintsForButtonsLandscape() {
+        for constraint in self.view.constraints {
+            if constraint.firstItem as? UIView == colorOneStackView && constraint.firstAttribute == .centerX {
+                constraint.constant = view.safeAreaLayoutGuide.layoutFrame.width * (-0.375 - constraintForColorOneLandscapeStackView)
+            }
+            if constraint.firstItem as? UIView == colorTwoStackView && constraint.firstAttribute == .centerX {
+                constraint.constant = view.safeAreaLayoutGuide.layoutFrame.width * constraintForColorTwoLandscapeStackView
+            }
+        }
+        self.view.setNeedsLayout()
+    }
+
+    private func updateConstraintsForButtons() {
+        for constraint in self.view.constraints {
+            if constraint.firstItem as? UIView == colorOneStackView && constraint.firstAttribute == .centerX {
+                constraint.constant = view.safeAreaLayoutGuide.layoutFrame.width * constraintForColorOneStackView
+            }
+            if constraint.firstItem as? UIView == colorTwoStackView && constraint.firstAttribute == .centerX {
+                constraint.constant = view.safeAreaLayoutGuide.layoutFrame.width * constraintForColorTwoStackView
+            }
+        }
+        self.view.setNeedsLayout()
+    }
+
     
 }
 
@@ -219,6 +357,8 @@ extension ViewController {
         
         colorOneButton.tag = 1
         colorTwoButton.tag = 2
+        colorThreeButton.tag = 3
+        colorFourButton.tag = 4
         
         view.addSubview(nameAppLabel)
         
@@ -226,11 +366,19 @@ extension ViewController {
         colorOneStackView.addArrangedSubview(colorOneLabel)
         colorOneStackView.addArrangedSubview(colorOneButton)
         
+        view.addSubview(colorThreeStackView)
+        colorThreeStackView.addArrangedSubview(colorThreeLabel)
+        colorThreeStackView.addArrangedSubview(colorThreeButton)
+        
         view.addSubview(plusLabel)
         
         view.addSubview(colorTwoStackView)
         colorTwoStackView.addArrangedSubview(colorTwoLabel)
         colorTwoStackView.addArrangedSubview(colorTwoButton)
+        
+        view.addSubview(colorFourStackView)
+        colorFourStackView.addArrangedSubview(colorFourLabel)
+        colorFourStackView.addArrangedSubview(colorFourButton)
         
         view.addSubview(equaleLabel)
         
@@ -239,16 +387,23 @@ extension ViewController {
         colorResultStackView.addArrangedSubview(colorResultButton)
         
         view.addSubview(languageSegmentedControl)
+        view.addSubview(colorsStepper)
+        
+        colorThreeStackView.alpha = 0
+        colorFourStackView.alpha = 0
         
         let currentLanguage = Locale.preferredLanguages.first ?? "en"
         updateSegmentedControl(for: currentLanguage)
         
         languageSegmentedControl.addTarget(self, action: #selector(languageChanged(_:)), for: .valueChanged)
-        
+        colorsStepper.addTarget(self, action: #selector(changedCountsColors), for: .valueChanged)
         
         colorOneButton.addTarget(self, action: #selector(colorChanged), for: .touchUpInside)
         colorTwoButton.addTarget(self, action: #selector(colorChanged), for: .touchUpInside)
+        colorThreeButton.addTarget(self, action: #selector(colorChanged), for: .touchUpInside)
+        colorFourButton.addTarget(self, action: #selector(colorChanged), for: .touchUpInside)
         changedColorName()
+        updateResultColor()
     }
     
     // MARK: - Setup Constraints
@@ -261,15 +416,25 @@ extension ViewController {
             nameAppLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             nameAppLabel.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
             
-            colorTwoStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            colorTwoStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            colorTwoButton.heightAnchor.constraint(equalToConstant: sizeButtons),
-            colorTwoButton.widthAnchor.constraint(equalToConstant: sizeButtons),
+            colorTwoStackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            colorTwoStackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant:  view.safeAreaLayoutGuide.layoutFrame.width * constraintForColorTwoStackView),
+            colorTwoButton.heightAnchor.constraint(equalToConstant: view.frame.width * 0.2),
+            colorTwoButton.widthAnchor.constraint(equalToConstant: view.frame.width * 0.2),
             
-            colorOneStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: view.frame.height / -4),
-            colorOneStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            colorOneButton.heightAnchor.constraint(equalToConstant: sizeButtons),
-            colorOneButton.widthAnchor.constraint(equalToConstant: sizeButtons),
+            colorFourStackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            colorFourStackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant:  view.safeAreaLayoutGuide.layoutFrame.width * 0.2),
+            colorFourButton.heightAnchor.constraint(equalToConstant: view.frame.width * 0.2),
+            colorFourButton.widthAnchor.constraint(equalToConstant: view.frame.width * 0.2),
+            
+            colorOneStackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor, constant: view.frame.height / -4),
+            colorOneStackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant: view.safeAreaLayoutGuide.layoutFrame.width * constraintForColorOneStackView),
+            colorOneButton.heightAnchor.constraint(equalToConstant: view.frame.width * 0.2),
+            colorOneButton.widthAnchor.constraint(equalToConstant: view.frame.width * 0.2),
+            
+            colorThreeStackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor, constant: view.frame.height / -4),
+            colorThreeStackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant: view.safeAreaLayoutGuide.layoutFrame.width * 0.2),
+            colorThreeButton.heightAnchor.constraint(equalToConstant: view.frame.width * 0.2),
+            colorThreeButton.widthAnchor.constraint(equalToConstant: view.frame.width * 0.2),
             
             plusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: view.frame.height / -8),
             plusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -277,13 +442,16 @@ extension ViewController {
             equaleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: view.frame.height / 8),
             equaleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
-            colorResultStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: view.frame.height / 4),
-            colorResultStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            colorResultButton.heightAnchor.constraint(equalToConstant: sizeButtons),
-            colorResultButton.widthAnchor.constraint(equalToConstant: sizeButtons),
+            colorResultStackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor, constant: view.frame.height / 4),
+            colorResultStackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            colorResultButton.heightAnchor.constraint(equalToConstant: view.frame.width * 0.2),
+            colorResultButton.widthAnchor.constraint(equalToConstant: view.frame.width * 0.2),
             
             languageSegmentedControl.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
-            languageSegmentedControl.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10)
+            languageSegmentedControl.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+            
+            colorsStepper.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
+            colorsStepper.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10)
         ]
         NSLayoutConstraint.activate(portraitConstraints)
     }
@@ -296,29 +464,42 @@ extension ViewController {
             nameAppLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             nameAppLabel.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
             
-            colorTwoStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            colorTwoStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            colorTwoButton.heightAnchor.constraint(equalToConstant: sizeButtons),
-            colorTwoButton.widthAnchor.constraint(equalToConstant: sizeButtons),
+            colorTwoStackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            colorTwoStackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant: view.safeAreaLayoutGuide.layoutFrame.width * constraintForColorTwoLandscapeStackView),
+            colorTwoButton.heightAnchor.constraint(equalToConstant: view.frame.height * 0.2),
+            colorTwoButton.widthAnchor.constraint(equalToConstant: view.frame.height * 0.2),
             
-            colorOneStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            colorOneStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: view.frame.height / -2),
-            colorOneButton.heightAnchor.constraint(equalToConstant: sizeButtons),
-            colorOneButton.widthAnchor.constraint(equalToConstant: sizeButtons),
+            colorFourStackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            colorFourStackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant:  view.safeAreaLayoutGuide.layoutFrame.width * 0.125),
+            colorFourButton.heightAnchor.constraint(equalToConstant: view.frame.height * 0.2),
+            colorFourButton.widthAnchor.constraint(equalToConstant: view.frame.height * 0.2),
             
-            plusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            plusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: view.frame.height / -4),
+            colorOneStackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            colorOneStackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant: view.safeAreaLayoutGuide.layoutFrame.width * (-0.375 - constraintForColorOneLandscapeStackView)),
+            colorOneButton.heightAnchor.constraint(equalToConstant: view.frame.height * 0.2),
+            colorOneButton.widthAnchor.constraint(equalToConstant: view.frame.height * 0.2),
             
-            equaleLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            equaleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: view.frame.height / 4),
+            colorThreeStackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            colorThreeStackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant: view.safeAreaLayoutGuide.layoutFrame.width * -0.25),
+            colorThreeButton.heightAnchor.constraint(equalToConstant: view.frame.height * 0.2),
+            colorThreeButton.widthAnchor.constraint(equalToConstant: view.frame.height * 0.2),
             
-            colorResultStackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            colorResultStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: view.frame.height / 2),
-            colorResultButton.heightAnchor.constraint(equalToConstant: sizeButtons),
-            colorResultButton.widthAnchor.constraint(equalToConstant: sizeButtons),
+            plusLabel.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            plusLabel.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant: view.safeAreaLayoutGuide.layoutFrame.width * -0.125),
+            
+            equaleLabel.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            equaleLabel.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant: view.safeAreaLayoutGuide.layoutFrame.width * 0.25),
+            
+            colorResultStackView.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
+            colorResultStackView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor, constant: view.safeAreaLayoutGuide.layoutFrame.width * 0.375),
+            colorResultButton.heightAnchor.constraint(equalToConstant: view.frame.height * 0.2),
+            colorResultButton.widthAnchor.constraint(equalToConstant: view.frame.height * 0.2),
             
             languageSegmentedControl.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
-            languageSegmentedControl.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10)
+            languageSegmentedControl.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+            
+            colorsStepper.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
+            colorsStepper.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10)
         ]
         NSLayoutConstraint.activate(landscapeConstraints)
     }

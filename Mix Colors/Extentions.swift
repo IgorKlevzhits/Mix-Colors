@@ -50,16 +50,39 @@ extension UIStackView {
 }
 
 extension UIColor {
-    func mix(with color: UIColor) -> UIColor {
+    func mix(with colors: [UIColor]) -> UIColor {
+        // Собираем все цвета в массив
+        var allColors = [self] + colors
         
-        let componentsColorOne = self.cgColor.components ?? [0, 0, 0, 0]
-        let componentsColorTwo = color.cgColor.components ?? [0, 0, 0, 0]
+        // Массивы для хранения суммарных значений компонентов
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
         
-        let r = componentsColorOne[0] + (componentsColorTwo[0] - componentsColorOne[0]) * 0.5
-        let g = componentsColorOne[1] + (componentsColorTwo[1] - componentsColorOne[1]) * 0.5
-        let b = componentsColorOne[2] + (componentsColorTwo[2] - componentsColorOne[2]) * 0.5
-        let a = componentsColorOne[3] + (componentsColorTwo[3] - componentsColorOne[3]) * 0.5
+        // Проходим по всем цветам
+        for color in allColors {
+            guard let components = color.cgColor.components, components.count >= 4 else {
+                // Если компоненты не могут быть извлечены, возвращаем оригинальный цвет
+                return self
+            }
+            
+            // Суммируем компоненты каждого цвета
+            r += components[0]
+            g += components[1]
+            b += components[2]
+            a += components[3]
+        }
         
+        // Находим среднее значение для каждого компонента
+        let count = CGFloat(allColors.count)
+        r /= count
+        g /= count
+        b /= count
+        a /= count
+        
+        // Возвращаем новый цвет с усредненными компонентами
         return UIColor(red: r, green: g, blue: b, alpha: a)
     }
 }
+
