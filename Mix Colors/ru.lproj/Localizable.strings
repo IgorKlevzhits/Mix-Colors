@@ -1,0 +1,18 @@
+/* 
+  Localizable.strings
+  Mix Colors
+
+  Created by Игорь Клевжиц on 23.01.2025.
+  
+*/
+"nameApp" = "Смешиай цвета";
+"colorRed" = "Красный";
+"colorGreen" = "Зеленый";
+"colorBlue" = "Синий";
+"colorYellow" = "Желтый";
+"colorOrange" = "Оранжевый";
+"colorPurple" = "Фиолетовый";
+"colorBrown" = "Коричневый";
+"colorGray" = "Серый";
+"colorBlack" = "Черный";
+"colorWhite" = "Белый";
