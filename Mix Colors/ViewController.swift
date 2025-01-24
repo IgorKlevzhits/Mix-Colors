@@ -28,7 +28,7 @@ class ViewController: UIViewController, UIColorPickerViewControllerDelegate {
     
     private var colorResultStackView = UIStackView(axis: .vertical)
     private lazy var colorResultLabel = UILabel(text: Bundle.localizedString(forKey: closestColorName(to: colorResultButton.backgroundColor ?? .white) ?? "error", value: nil, table: nil), size: 20)
-    private var colorResultButton = UIButton(color: .red)
+    private var colorResultButton = UIButton(color: .brown)
     
     private lazy var languageSegmentedControl: UISegmentedControl = {
         let element = UISegmentedControl(items: ["en", "ru"])
